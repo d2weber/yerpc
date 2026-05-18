@@ -19,7 +19,11 @@ mod tests {
         }
     }
 
-    #[rpc(all_positional, ts_outdir = "typescript/generated")]
+    #[rpc(
+        all_positional,
+        ts_outdir = "typescript/generated",
+        c_outdir = "c/generated"
+    )]
     impl Api {
         async fn shout(&self, msg: String) -> String {
             msg.to_uppercase()

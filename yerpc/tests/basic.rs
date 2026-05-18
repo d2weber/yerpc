@@ -1,11 +1,16 @@
 use futures_util::StreamExt;
 use yerpc::{rpc, RpcSession};
 
+#[allow(unnameable_test_items)]
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
     struct Api {}
 
-    #[rpc(all_positional, ts_outdir = "typescript/generated")]
+    #[rpc(
+        all_positional,
+        ts_outdir = "typescript/generated",
+        c_outdir = "c/generated"
+    )]
     impl Api {
         pub async fn constant(&self) -> String {
             "example".to_string()
@@ -47,11 +52,16 @@ async fn basic() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[allow(unnameable_test_items)]
 #[tokio::test]
 async fn basic_mixed_id_types() -> anyhow::Result<()> {
     struct Api {}
 
-    #[rpc(all_positional, ts_outdir = "typescript/generated")]
+    #[rpc(
+        all_positional,
+        ts_outdir = "typescript/generated",
+        c_outdir = "c/generated"
+    )]
     impl Api {
         pub async fn upper(&self, text: String) -> String {
             text.to_uppercase()

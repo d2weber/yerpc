@@ -1,4 +1,4 @@
-use crate::{util::extract_result_ty, Inputs, RpcInfo};
+use crate::{util::extract_method_io, RpcInfo};
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -6,41 +6,8 @@ pub(crate) fn generate_typescript_generator(info: &RpcInfo, outdir_path: &String
     let mut gen_types = vec![];
     let mut gen_methods = vec![];
     for method in &info.methods {
-        let (is_positional, gen_args) = match &method.input {
-            Inputs::Positional(ref inputs) => {
-                let mut gen_args = vec![];
-                for (i, input) in inputs.iter().enumerate() {
-                    let ty = input.ty;
-                    let name = input
-                        .ident
-                        .map_or_else(|| format!("arg{}", i + 1), ToString::to_string)
-                        .to_case(Case::Camel);
-                    gen_types.push(quote!(#ty));
-                    gen_args.push(quote!((#name.to_string(), &<#ty as TypeDef>::INFO)))
-                }
-                (true, gen_args)
-            }
-            Inputs::Structured(Some(input)) => {
-                let mut gen_args = vec![];
-                let ty = input.ty;
-                let name = input
-                    .ident
-                    .map_or_else(|| "params".to_string(), ToString::to_string)
-                    .to_case(Case::Camel);
-                gen_types.push(quote!(#ty));
-                gen_args.push(quote!((#name.to_string(), &<#ty as TypeDef>::INFO)));
-                (false, gen_args)
-            }
-            Inputs::Structured(None) => (false, vec![]),
-        };
-        let gen_output = match (method.output, method.is_notification) {
-            (_, true) | (None, _) => quote!(None),
-            (Some(ty), false) => {
-                let ty = extract_result_ty(ty);
-                gen_types.push(quote!(#ty));
-                quote!(Some(&<#ty as TypeDef>::INFO))
-            }
-        };
+        let (is_positional, gen_args, gen_output) =
+            extract_method_io(method, &mut gen_types, |n| n.to_case(Case::Camel));
         let ts_name = method.name.to_case(Case::Camel);
         let rpc_name = &method.name;
         let is_notification = method.is_notification;

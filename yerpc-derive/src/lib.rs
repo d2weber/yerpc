@@ -11,11 +11,13 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Item};
 
+mod c;
 #[cfg(feature = "openrpc")]
 mod openrpc;
 mod parse;
 mod rpc;
 mod ts;
+pub(crate) use c::generate_c_generator;
 pub(crate) use parse::{Inputs, RpcInfo};
 pub(crate) use rpc::generate_rpc_impl;
 pub(crate) use ts::generate_typescript_generator;
@@ -30,6 +32,10 @@ pub(crate) mod util;
 ///   If not set, no typescript definitions will be written.
 /// - `openrpc_outdir: Option<String>` Set the path where openrpc specification file will be written to (relative to the crate root).
 ///   If not set, no openrpc definition file will be written.
+/// - `c_outdir: Option<String>` Set the path where C definitions will be written to (relative to the crate root).
+///   If not set, no C definitions will be written
+/// - `c_namespace: Option<String>` Set the prefix/namespace used for C and C++ definitions
+///   If not set, no prefix will be used
 ///
 /// Note that you need to specify atleast one type definition output: `ts_outdir`, `openrpc_outdir` or both.
 ///
@@ -53,10 +59,10 @@ pub fn rpc(attr: TokenStream, tokens: TokenStream) -> TokenStream {
                 Ok(args) => args,
                 Err(err) => return TokenStream::from(err.write_errors()),
             };
-            if attr_args.openrpc_outdir.is_none() && attr_args.ts_outdir.is_none() {
+            if attr_args.openrpc_outdir.is_none() && attr_args.ts_outdir.is_none() && attr_args.c_outdir.is_none() {
                 return syn::Error::new_spanned(
                     item,
-                    "The #[rpc] attribute needs atleast one type definition output. Please either set ts_outdir, openrpc_outdir or both.",
+                    "The #[rpc] attribute needs at least one type definition output. Please set one of ts_outdir, c_outdir or openrpc_outdir.",
                 )
                 .to_compile_error().into()
             }
@@ -64,6 +70,11 @@ pub fn rpc(attr: TokenStream, tokens: TokenStream) -> TokenStream {
             let info = RpcInfo::from_impl(&attr_args, input);
             let ts_impl = if let Some(outdir) = attr_args.ts_outdir.as_ref() {
                 generate_typescript_generator(&info,outdir)
+            } else {
+                quote!()
+            };
+            let c_impl = if let Some(outdir) = attr_args.c_outdir.as_ref() {
+                generate_c_generator(&info, outdir, &attr_args.c_namespace.clone().unwrap_or_default())
             } else {
                 quote!()
             };
@@ -83,6 +94,7 @@ pub fn rpc(attr: TokenStream, tokens: TokenStream) -> TokenStream {
                 #item
                 #rpc_impl
                 #ts_impl
+                #c_impl
                 #openrpc_impl
             }
         }
@@ -105,6 +117,12 @@ pub(crate) struct RootAttrArgs {
     /// Set the path where typescript definitions are written to (relative to the crate root).
     /// If not set, no typescript definitions will be written
     ts_outdir: Option<String>,
+    /// Set the path where C definitions are written to (relative to the crate root).
+    /// If not set, no C definitions will be written
+    c_outdir: Option<String>,
+    /// Set the prefix/namespace used for C and C++ definitions
+    /// If not set, no prefix will be used
+    c_namespace: Option<String>,
     /// Set the path where openrpc definitions will be written to (relative to the crate root).
     /// If not set, no openrpc definitions will be written.
     openrpc_outdir: Option<String>,

@@ -27,6 +27,7 @@ serde_json = "1.0.138"
 serde = { version = "1.0.217", features = ["derive"] }
 
 # type generating dependencies
+convert_case.workspace = true
 typescript-type-def = { version = "0.5.13", features = ["json_value"] }
 schemars = { version = "0.8.21", optional = true }
 
@@ -49,3 +50,7 @@ axum = { version = "0.8.1", features = ["ws"] }
 tokio-tungstenite = { version = "0.26.1" }
 tokio = { version = "1.43.0", features = ["rt", "macros"] }
 url = "2.5.4"
+proptest = "1"
+cc = "1"
+tempfile = "3"
+current_platform = "0.2"

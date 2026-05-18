@@ -1,3 +1,6 @@
 [workspace]
-members = ["yerpc-derive", "yerpc", "examples/tide", "examples/axum"]
+members = ["yerpc-derive", "yerpc", "c-test", "examples/tide", "examples/axum"]
 resolver = "2"
+
+[workspace.dependencies]
+convert_case = "0.5.0"

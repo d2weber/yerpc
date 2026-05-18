@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 
 pub use yerpc_derive::rpc;
 
+pub mod c;
+pub mod cpp;
 #[cfg(feature = "openrpc")]
 pub mod openrpc;
 mod requests;
@@ -18,6 +20,7 @@ pub use typescript::TypeDef;
 pub use version::Version;
 
 mod integrations;
+#[allow(unused_imports)] // no integrations might be configured
 pub use integrations::*;
 
 #[async_trait]
